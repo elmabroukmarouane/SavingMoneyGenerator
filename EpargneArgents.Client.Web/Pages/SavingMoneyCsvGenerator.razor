@@ -1,0 +1,118 @@
+﻿@page "/saving-money-calendar-generator.html"
+@using EpargneArgents.Client.Web.Models
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<PageTitle>Saving Money Calendar Generator</PageTitle>
+
+<h1>Saving Money Calendar Generator 😁</h1>
+
+<p>Use this tool to generate a CSV file that you can import into your favorite calendar app to help you save money.</p>
+
+<p>Enter the total amount you want to save <b>(e.g : 10000)</b>, the list of the amount per day <b>(e.g : 5;10;20;50;60)</b>, and the number of days for saving <b>(e.g  : 365)</b>, and click the <b>"Generate CSV" button.</b></p>
+
+<p>Then import the CSV file into your excel sheet to manage it, and you'll have a daily amount to save money!</p>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error:</strong> @ErrorMessage
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+
+@if (IsGenerating)
+{
+    <div class="alert alert-info" role="alert">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        Generating CSV file...
+    </div>
+}
+
+<div class="form-group">
+    <label for="totalAmount" style="font-weight: bold;">Total Amount</label>
+    <input type="number" class="form-control" id="totalAmount" placeholder="Enter the total amount you want to save" @bind="TotalAmount" disabled="@IsGenerating" />
+    <br />
+    <label for="denominations" style="font-weight: bold;">Denominations</label>
+    <input type="text" class="form-control" id="denominations" placeholder="Enter the list of the amount per day" @bind="Denominations" disabled="@IsGenerating" />
+    <small class="form-text text-muted">Example: 5;10;20;50;60</small>
+    <br />
+    <label for="numberDaysSaving" style="font-weight: bold;">Number of days of saving</label>
+    <input type="number" class="form-control" id="numberDaysSaving" placeholder="Enter the number of days for saving" @bind="NumberDaysSaving" disabled="@IsGenerating" />
+</div>
+<br />
+<button class="btn btn-primary" @onclick="GenerateCSV" disabled="@IsDisabled">Generate CSV</button>
+
+@code {
+    private int? TotalAmount { get; set; } = null;
+    private string? Denominations { get; set; } = null;
+    private int? NumberDaysSaving { get; set; } = null;
+    private string? ErrorMessage { get; set; } = null;
+    private bool IsGenerating { get; set; } = false;
+
+    private bool IsFormValid() => 
+        (TotalAmount is null && string.IsNullOrEmpty(Denominations) && NumberDaysSaving is null) || 
+        (TotalAmount.HasValue && !string.IsNullOrEmpty(Denominations) && NumberDaysSaving.HasValue);
+
+    private string? IsDisabled => !IsFormValid() || IsGenerating ? "disabled" : null;
+
+    private void ClearError() => ErrorMessage = null;
+
+    private async Task GenerateCSV()
+    {
+        try
+        {
+            ErrorMessage = null;
+            IsGenerating = true;
+
+            if (!TotalAmount.HasValue || string.IsNullOrEmpty(Denominations) || !NumberDaysSaving.HasValue)
+            {
+                ErrorMessage = "All fields must be filled correctly.";
+                return;
+            }
+
+            var parameters = new Parameters
+            {
+                TotalAmount = TotalAmount.Value,
+                Denominations = Denominations,
+                NumberDaysSaving = NumberDaysSaving.Value
+            };
+
+            // Build the API endpoint URL - use relative URL for integration with backend
+            var apiUrl = "api/DailyContribution";
+
+            var response = await HttpClient.PostAsJsonAsync(apiUrl, parameters);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorMessage = $"API Error ({response.StatusCode}): {errorContent}";
+                return;
+            }
+
+            // Read the file content as a stream
+            var fileStream = await response.Content.ReadAsStreamAsync();
+
+            // Get the file name from the response headers (if provided)
+            var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"') 
+                ?? $"daily_contribution_{DateTime.Now:yyyyMMddHHmmss}.csv";
+
+            // Create a browser-compatible download link
+            using var streamRef = new DotNetStreamReference(stream: fileStream);
+            await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        }
+        catch (HttpRequestException ex)
+        {
+            ErrorMessage = $"Network error: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unexpected error: {ex.Message}";
+        }
+        finally
+        {
+            IsGenerating = false;
+        }
+    }
+}

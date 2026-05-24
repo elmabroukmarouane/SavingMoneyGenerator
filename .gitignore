@@ -1,0 +1,9 @@
+EpargneArgents.Business/bin
+EpargneArgents.Business/obj
+EpargneArgents.Api/bin
+EpargneArgents.Api/obj
+EpargneArgents.API/GeneratedCsvOutputFolder
+EpargneArgents.Client-master
+.vscode
+.vs
+.sonarqube

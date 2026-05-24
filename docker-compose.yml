@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  api:
+    image: epargneargents-api:latest
+    container_name: epargneargents-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000;https://+:5001
+    volumes:
+      - csv_output:/app/GeneratedCsvOutputFolder
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - epargneargents-network
+    restart: unless-stopped
+    labels:
+      - "com.example.app=epargneargents"
+      - "com.example.version=1.0.0"
+
+volumes:
+  csv_output:
+    driver: local
+
+networks:
+  epargneargents-network:
+    driver: bridge
