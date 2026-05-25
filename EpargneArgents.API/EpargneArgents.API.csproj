@@ -14,14 +14,8 @@
     <ProjectReference Include="..\EpargneArgents.Business\EpargneArgents.Business.csproj" />
   </ItemGroup>
 
-  <!-- Include static files from Blazor frontend for publishing -->
   <ItemGroup>
-    <StaticFiles Include="..\EpargneArgents.Client.Web\wwwroot\**" />
+    <ProjectReference Include="..\EpargneArgents.Client.Web\EpargneArgents.Client.Web.csproj" />
   </ItemGroup>
-
-  <Target Name="PublishBlazorAssets" BeforeTargets="Build">
-    <Message Text="Preparing Blazor frontend assets for web hosting..." Importance="high" />
-    <!-- This will be executed during build to prepare frontend assets -->
-  </Target>
 
 </Project>

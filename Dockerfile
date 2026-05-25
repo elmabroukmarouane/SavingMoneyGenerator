@@ -12,7 +12,7 @@ COPY ["EpargneArgents.Client.Web/", "EpargneArgents.Client.Web/"]
 # Restore dependencies
 RUN dotnet restore "EpargneArgents.sln"
 
-# Publish
+# Publish the API (which will also publish the Blazor WASM client via ProjectReference)
 RUN dotnet publish "EpargneArgents.API/EpargneArgents.API.csproj" -c Release -o /app/publish
 
 # Runtime stage
