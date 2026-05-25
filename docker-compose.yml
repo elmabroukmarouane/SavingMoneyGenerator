@@ -1,37 +1,49 @@
-version: '3.8'
-
 services:
   api:
     image: epargneargents-api:latest
-    container_name: epargneargents-api
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-      - "5001:5001"
+    container_name: saving-money-generator
+
+    restart: unless-stopped
+
+    networks:
+      - proxy
+
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:5000;https://+:5001
+      - ASPNETCORE_URLS=http://+:9384
+
     volumes:
-      - csv_output:/app/GeneratedCsvOutputFolder
+      - /mnt/nvme/epargneargents/csv_output:/app/GeneratedCsvOutputFolder
+
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:9384/"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
-    networks:
-      - epargneargents-network
-    restart: unless-stopped
+
     labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # HTTP
+      - "traefik.http.routers.epargneargents-http.rule=Host(`saving-money-generator.my-pi.lan`)"
+      - "traefik.http.routers.epargneargents-http.entrypoints=web"
+      - "traefik.http.routers.epargneargents-http.middlewares=chain-http@file"
+
+      # HTTPS
+      - "traefik.http.routers.epargneargents-https.rule=Host(`saving-money-generator.my-pi.lan`)"
+      - "traefik.http.routers.epargneargents-https.entrypoints=websecure"
+      - "traefik.http.routers.epargneargents-https.tls=true"
+      - "traefik.http.routers.epargneargents-https.middlewares=chain-https@file"
+
+      # Internal ASP.NET port
+      - "traefik.http.services.epargneargents.loadbalancer.server.port=9384"
+
+      # Optional metadata
       - "com.example.app=epargneargents"
       - "com.example.version=1.0.0"
 
-volumes:
-  csv_output:
-    driver: local
-
 networks:
-  epargneargents-network:
-    driver: bridge
+  proxy:
+    external: true
