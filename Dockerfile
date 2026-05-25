@@ -26,17 +26,17 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/publish .
 
 # Create directory for CSV output
-RUN mkdir -p GeneratedCsvOutputFolder
+RUN mkdir -p /app/GeneratedCsvOutputFolder
 
-# Expose ports
-EXPOSE 5000 5001
+# Only expose internal HTTP port
+EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-	CMD curl -f http://localhost:5000/ || exit 1
+    CMD curl -f http://localhost:5000/ || exit 1
 
-# Set environment
-ENV ASPNETCORE_URLS=http://+:5000;https://+:5001
+# HTTP only (Traefik handles HTTPS)
+ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Start application
