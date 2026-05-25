@@ -37,6 +37,7 @@ var corsPolicy = builder.Configuration.GetSection("CorsName").Value ?? "AllowAll
 app.UseCors(corsPolicy);
 
 // Configure static files (for Blazor frontend)
+app.UseBlazorFrameworkFiles();
 app.UseDefaultFiles(); // Serve index.html by default
 app.UseStaticFiles();
 
