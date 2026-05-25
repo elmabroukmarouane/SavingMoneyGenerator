@@ -10,7 +10,6 @@ services:
 
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:9384
 
     volumes:
       - /mnt/nvme/epargneargents/csv_output:/app/GeneratedCsvOutputFolder
