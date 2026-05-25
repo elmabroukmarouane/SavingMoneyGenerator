@@ -29,14 +29,14 @@ COPY --from=build /app/publish .
 RUN mkdir -p /app/GeneratedCsvOutputFolder
 
 # Only expose internal HTTP port
-EXPOSE 5000
+EXPOSE 9384
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/ || exit 1
+    CMD curl -f http://localhost:9384/ || exit 1
 
 # HTTP only (Traefik handles HTTPS)
-ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_URLS=http://+:9384
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Start application
